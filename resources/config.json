@@ -1,0 +1,12 @@
+{"sources": {
+    "twitter": {
+	"creds": {"app-consumer-key": "2Fepg6VHOds32YO8rzvlGA",
+		  "app-consumer-secret": "efDiEQoKm8BDF8GJgiHq8p6MBMTKQPJsY8u1z3jxM4",
+		  "user-access-token": "16837493-Vz53EA9Z5YP7E7tOADj6yQUoFQosLClC4qwwthvDo",
+		  "user-access-token-secret": "vJZhlAB97LUI0an9rnm0U9Qa79kp9uUsXY91rxvROiU"
+		 },
+	"user-timeline": {"enabled": true}
+    }
+}
+}
+ 
