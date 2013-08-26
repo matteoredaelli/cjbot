@@ -66,7 +66,8 @@
                     :body) 
                    :ids)
         ]
-
+    (debug "friends-count =" (count friends))
+    (debug "followers-count =" (count followers))
     (warn "Finished extract-twitter-user user_id =" (twitter-params :user-id) "screen_name =" (twitter-params :screen-name))
 
     {:user-show user-show
