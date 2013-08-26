@@ -11,9 +11,10 @@
                       :twitter-params {:screen-name "matteoredaelli"}
                       :crawler-params {:crawl-friends true 
                                        :crawl-followers true 
-                                       :crawl-urls true
+                                       :crawl-urls false
                                        :results-to-redis true
-                                       :redis {:server "localhost" :port 1111}
-                                       :amqp {:server "localhost" :port 1111 :queue}
+                                       :redis-server {:server "localhost" :port 1111}
+                                       :amqp-server {:server "localhost" :port 1111 :queue "cjbot.results"}
+                                       :riak-server {:server "localhost" :port 1111}
                                        }
-                      )) 
+                      ))

@@ -81,10 +81,8 @@
   (warn "Starting crawling user_id =" (twitter-params :user-id) "screen_name =" (twitter-params :screen-name) "with depth = " depth)
   (let [user-result (extract-twitter-user :twitter-params twitter-params)
         new-depth (- depth 1)]
-    (if (> depth 0) 
-      (
+    (if (> depth 0)
        (map #(debug "user-id =" % "will be crawled") (user-result :friends))
-       )
       ;; else
       (info "Stopping crawling, depth=0"))))
     
