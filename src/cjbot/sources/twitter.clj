@@ -32,10 +32,14 @@
     (distinct (map :expanded_url (concat url_objects_no_retweets url_objects_retweets)))))
 
 (defn get-user-info [& {:keys [twitter-params]}]
-  (users-show :oauth-creds creds :params twitter-params))
+  (users-show :oauth-creds creds
+              :proxy (config :proxy)
+              :params twitter-params))
+
 
 (defn get-user-timeline [& {:keys [twitter-params]}]
   (statuses-user-timeline :oauth-creds creds 
+                          :proxy (config :proxy)
                           :params (merge twitter-params {:include-rts true})))
 
 (defn extract-twitter-user [ & {:keys [twitter-params]}]
@@ -45,6 +49,7 @@
   (let [
       
         user-show (users-show :oauth-creds creds 
+                              :proxy (config :proxy)
                               :params twitter-params)
      
         timeline (get-user-timeline  :twitter-params twitter-params)
@@ -57,17 +62,19 @@
 
    
         friends (((friends-ids :oauth-creds creds 
+                               :proxy (config :proxy)
                                :params (merge twitter-params {:count 5000}))
                   :body) 
                  :ids)
  
         followers (((followers-ids :oauth-creds creds 
+                                   :proxy (config :proxy)
                                    :params (merge twitter-params {:count 5000}))
                     :body) 
                    :ids)
         ]
-    (debug "friends-count =" (count friends))
-    (debug "followers-count =" (count followers))
+    (debug "friends-count =" (count friends) ((user-show :body) :friends_count))
+    (debug "followers-count =" (count followers) ((user-show :body) :followers_count))
     (warn "Finished extract-twitter-user user_id =" (twitter-params :user-id) "screen_name =" (twitter-params :screen-name))
 
     {:user-show user-show

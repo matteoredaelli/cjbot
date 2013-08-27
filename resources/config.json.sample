@@ -1,4 +1,5 @@
-{"sources": {
+{ "proxy" : null,
+"sources": {
     "twitter": {
 	"creds": {"app-consumer-key": "XXXXXXXXX",
 		  "app-consumer-secret": "XXXXXXXXX",
