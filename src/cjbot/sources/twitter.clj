@@ -31,17 +31,6 @@
         ]
     (distinct (map :expanded_url (concat url_objects_no_retweets url_objects_retweets)))))
 
-(defn get-user-info [& {:keys [twitter-params]}]
-  (users-show :oauth-creds creds
-              :proxy (config :proxy)
-              :params twitter-params))
-
-
-(defn get-user-timeline [& {:keys [twitter-params]}]
-  (statuses-user-timeline :oauth-creds creds 
-                          :proxy (config :proxy)
-                          :params (merge twitter-params {:include-rts true})))
-
 (defn extract-twitter-user [ & {:keys [twitter-params]}]
   ;; extracting info about the user params must be
   ;; {:screen-name user} or {:user-id user}
@@ -52,7 +41,11 @@
                               :proxy (config :proxy)
                               :params twitter-params)
      
-        timeline (get-user-timeline  :twitter-params twitter-params)
+        timeline (statuses-user-timeline :oauth-creds creds 
+                                         :proxy (config :proxy)
+                                         :params (merge twitter-params 
+                                                        {:include-rts true}))
+
         ;;people-retwitting (get-retwitters-out-from-timeline timeline)
         ;;mentions-names-out (get-mentions-out-from-timeline timeline)
         ;; extracting users from favorites tweets
@@ -85,12 +78,21 @@
   )
 )
 
-(defn crawl-twitter-user [ & {:keys [twitter-params depth crawler-params]}]
-  (warn "Starting crawling user_id =" (twitter-params :user-id) "screen_name =" (twitter-params :screen-name) "with depth = " depth)
-  (let [user-result (extract-twitter-user :twitter-params twitter-params)
-        new-depth (- depth 1)]
+(defn crawl-twitter-users [ & {:keys [user-id depth crawler-params crawled-users]}]
+  (warn "Starting crawling user_id =" :user-id)
+  (def friends #{})
+  (def followers #{})
+  (if (crawler-params :crawl-friends)
+        (def friends (((friends-ids :oauth-creds creds 
+                                            :proxy (config :proxy)
+                                            :params {:user-id user-id
+                                                     :count 5000})
+                                  :body) 
+                                    :ids)))
+  (def new-people (clojure.set/union (set friends) (set followers) #{user_id}))
+ 
     (if (> depth 0)
-       (map #(debug "user-id =" % "will be crawled") (user-result :friends))
+        (map #(debug "user-id =" % "will be crawled") new-people)
       ;; else
-      (info "Stopping crawling, depth=0"))))
+         (info "Stopping crawling, depth=0")))
     
