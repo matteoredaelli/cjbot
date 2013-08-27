@@ -1,5 +1,6 @@
 (ns cjbot.sources.twitter
   (:use
+   [clojure.set]
    [twitter.oauth]
    [twitter.callbacks]
    [twitter.callbacks.handlers]
@@ -79,20 +80,45 @@
 )
 
 (defn crawl-twitter-users [ & {:keys [user-id depth crawler-params crawled-users]}]
-  (warn "Starting crawling user_id =" :user-id)
-  (def friends #{})
-  (def followers #{})
-  (if (crawler-params :crawl-friends)
-        (def friends (((friends-ids :oauth-creds creds 
-                                            :proxy (config :proxy)
-                                            :params {:user-id user-id
-                                                     :count 5000})
-                                  :body) 
-                                    :ids)))
-  (def new-people (clojure.set/union (set friends) (set followers) #{user_id}))
- 
-    (if (> depth 0)
-        (map #(debug "user-id =" % "will be crawled") new-people)
-      ;; else
-         (info "Stopping crawling, depth=0")))
+  (warn "Starting crawling user-id" user-id "with depth =" depth)
+  (warn "Retreiving friends for user-id =" user-id)
+  (def friends 
+    (((friends-ids :oauth-creds creds 
+                     :proxy (config :proxy)
+                     :params {:user-id user-id
+                              :count 5000})
+      :body)
+     :ids))
+  (warn "Found" (count friends) "friends for user-id " user-id)
+
+
+  (warn "retreiving followers for user-id =" user-id) 
+  (def followers 
+    (((followers-ids :oauth-creds creds 
+                     :proxy (config :proxy)
+                     :params {:user-id user-id
+                              :count 5000})
+      :body)
+     :ids))
+  (warn "Found" (count followers) "folowers for user-id " user-id)
+
+  (def new-people (difference 
+                   (union #{user-id} (set friends) (set followers))
+                   crawled-users))
+
+  (doall (map #(println "user" %) new-people))
+  (doall (map #(println "friend" user-id %) friends))
+  (doall (map #(println "follower" user-id %) followers))
+
+  (if (> depth 0)
+    (let [new-depth (- depth 1)
+          new-crawled-users (union crawled-users #{user-id})]
+      (map #(crawl-twitter-users 
+             :user-id % 
+             :depth new-depth 
+             :crawler-params crawler-params 
+             :crawled-users new-crawled-users) 
+           new-people))
+    ;; else
+    (info "Stopping crawling for userid =" user-id " depth=0")))
     
