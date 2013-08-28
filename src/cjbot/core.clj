@@ -11,6 +11,7 @@
         (cli args
              ["-h" "--help" "Show help" :flag true :default false]
              ["-d" "--depth" "depth" :default "0"]
+             ["-o" "--output" "output to stdout" :default "stdout"]
              ["-s" "--sleep" "sleep" :default "10000"]
              ["-u" "--user-id" "user-id like 16837493"]
              )]
@@ -24,6 +25,7 @@
                                           ;; TODO :crawl-urls false
                                           :crawled-users #{}
                                           :sleep (read-string (:sleep opts))
+                                          :output (:output opts)
                                           ;; TODO :redis-server {:server "localhost" :port 1111}
                                           ;; TODO :amqp-server {:server "localhost" :port 1111 :queue "cjbot.results"}
                                           ;; TODO :riak-server {:server "localhost" :port 1111}

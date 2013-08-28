@@ -16,6 +16,11 @@
                              (config :sources :twitter :creds :user-access-token) 
                              (config :sources :twitter :creds :user-access-token-secret)))
 
+
+;;
+;;
+;;
+
 (defn sleep [n]
   (warn "Sleeping for" n "milliseconds")
   (Thread/sleep n))
@@ -35,6 +40,10 @@
         url_objects_retweets (flatten (map :urls (map  :entities (map :retweeted_status (timeline :body)))))
         ]
     (distinct (map :expanded_url (concat url_objects_no_retweets url_objects_retweets)))))
+
+;;
+;;
+;;
 
 (defn extract-twitter-user [ & {:keys [twitter-params]}]
   ;; extracting info about the user params must be
@@ -94,6 +103,8 @@
       :body)
      :ids))
   (warn "Found" (count friends) "friends for user-id " user-id)
+  (when (re-find #"stdout" (crawler-params :output))
+     (map #(println "friend" user-id %) friends))
   (sleep (crawler-params :sleep))
 
 
@@ -106,6 +117,8 @@
       :body)
      :ids))
   (warn "Found" (count followers) "followers for user-id " user-id)
+  (when (re-find #"stdout" (crawler-params :output))
+     (doall (map #(println "follower" user-id %) followers)))
   (sleep (crawler-params :sleep))
 
   (def new-people (difference 
@@ -113,11 +126,9 @@
                    crawled-users))
 
   (warn "New users found =" (count new-people) )
-  (doall (map #(println "user" %) new-people))
-  (doall (map #(println "friend" user-id %) friends))
-  (doall (map #(println "follower" user-id %) followers))
+  (when (re-find #"stdout" (crawler-params :output))
+    (doall (map #(println "user" %) new-people)))
 
-  (sleep (crawler-params :sleep))
 
   (if (> depth 0)
     (let [new-depth (- depth 1)
