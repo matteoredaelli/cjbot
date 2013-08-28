@@ -11,8 +11,9 @@
         (cli args
              ["-h" "--help" "Show help" :flag true :default false]
              ["-d" "--depth" "depth" :default "0"]
-             ["-o" "--output" "output to stdout" :default "stdout"]
+             ["-o" "--output" "output to stdout|redis" :default "stdout"]
              ["-s" "--sleep" "sleep" :default "10000"]
+             ["-t" "--timelines" "retreive timelines" :flag true :default true]
              ["-u" "--user-id" "user-id like 16837493"]
              )]
     (when (or (:help opts) (not (:user-id opts)))
@@ -26,6 +27,7 @@
                                           :crawled-users #{}
                                           :sleep (read-string (:sleep opts))
                                           :output (:output opts)
+                                          :timelines (:timelines opts)
                                           ;; TODO :redis-server {:server "localhost" :port 1111}
                                           ;; TODO :amqp-server {:server "localhost" :port 1111 :queue "cjbot.results"}
                                           ;; TODO :riak-server {:server "localhost" :port 1111}

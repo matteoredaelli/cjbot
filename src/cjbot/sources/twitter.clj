@@ -1,5 +1,6 @@
 (ns cjbot.sources.twitter
   (:use
+   [cjbot.redis]
    [clojure.set]
    [twitter.oauth]
    [twitter.callbacks]
@@ -11,13 +12,13 @@
     :refer (trace debug info warn error fatal spy with-log-level)])
   )
 
+(def source-name "twitter")
+
 (def creds (make-oauth-creds (config :sources :twitter :creds :app-consumer-key)
                              (config :sources :twitter :creds :app-consumer-secret)
                              (config :sources :twitter :creds :user-access-token) 
                              (config :sources :twitter :creds :user-access-token-secret)))
 
-
-;;
 ;;
 ;;
 
@@ -67,20 +68,21 @@
   (warn "Found" (count friends) "friends for user-id ="  (twitter-params :user-id) "screen-name = " (twitter-params :screen-name))
   friends)
 
-(defn extract-twitter-user [ & {:keys [twitter-params]}]
-  ;; extracting info about the user params must be
-  ;; {:screen-name user} or {:user-id user}
-  (warn "Starting extract-twitter-user user_id =" (twitter-params :user-id) "screen_name =" (twitter-params :screen-name))
-  (let [
-      
-        user-show (users-show :oauth-creds creds 
-                              :proxy (config :proxy)
-                              :params twitter-params)
-     
-        timeline (statuses-user-timeline :oauth-creds creds 
+(defn get-user-timeline [twitter-params]
+  (warn "Retreiving timeline for user-id =" (twitter-params :user-id) "screen-name = " (twitter-params :screen-name))
+  (def timeline ((statuses-user-timeline :oauth-creds creds 
                                          :proxy (config :proxy)
                                          :params (merge twitter-params 
-                                                        {:include-rts true}))
+                                                        {:count 5000 :include-rts true}))
+    :body))
+  (warn "Found" (count timeline) "tweets in timeline for user-id =" (twitter-params :user-id) "screen-name = " (twitter-params :screen-name))
+  timeline)
+
+(defn get-users-lookup [people]
+  ;; split in list of 100 people
+  ;; (users-lookup {user-id "1,1,1,1"})
+  nil
+  )
 
         ;;people-retwitting (get-retwitters-out-from-timeline timeline)
         ;;mentions-names-out (get-mentions-out-from-timeline timeline)
@@ -89,33 +91,33 @@
         ;;                          :params params)
         ;;people-favorites (map :screen_name (map :user (favorites :body)))
 
-        friends nil
-        followers nil 
-        ]
-    (debug "friends-count =" (count friends) ((user-show :body) :friends_count))
-    (debug "followers-count =" (count followers) ((user-show :body) :followers_count))
-    (warn "Finished extract-twitter-user user_id =" (twitter-params :user-id) "screen_name =" (twitter-params :screen-name))
-
-    {:user-show user-show
-     :timeline timeline
-     :friends friends
-     :followers followers
-     }
-  )
-)
-
 (defn crawl-twitter-users [ & {:keys [user-id depth crawler-params crawled-users]}]
   (warn "Starting crawling user-id" user-id "with depth =" depth ", crawled-users =" (count crawled-users))
 
+  ;;
+  ;; friends
+  ;; 
   (def friends (get-user-friends {:user-id user-id}))
+
   (when (re-find #"stdout" (crawler-params :output))
-     (map #(println "friend" user-id %) friends))
+    (doall (map #(println "friend" user-id %) friends)))
+
+  (when (re-find #"redis" (crawler-params :output))
+    (save-key-value-hash source-name "user" user-id "friends" friends))
+
   (sleep (crawler-params :sleep))
 
-
+  ;;
+  ;; followers
+  ;; 
   (def followers (get-user-followers {:user-id user-id}))
+
   (when (re-find #"stdout" (crawler-params :output))
      (doall (map #(println "follower" user-id %) followers)))
+
+  (when (re-find #"redis" (crawler-params :output))
+    (save-key-value-hash source-name "user" user-id "followers" followers))
+
   (sleep (crawler-params :sleep))
 
   (def new-people (difference 
@@ -123,13 +125,29 @@
                    crawled-users))
 
   (warn "New users found =" (count new-people) )
+
   (when (re-find #"stdout" (crawler-params :output))
     (doall (map #(println "user" %) new-people)))
 
+  ;;
+  ;; timeline
+  ;; 
+  (when (crawler-params :timelines)
+    (let [timeline (get-user-timeline {:user-id user-id})]
+
+      (when (re-find #"stdout" (crawler-params :output))
+        (doall (map #(println "timeline" user-id %) timeline)))
+
+      (when (re-find #"redis" (crawler-params :output))
+        (save-key-value-hash source-name "user" user-id "timeline" timeline))
+
+      (sleep (crawler-params :sleep))))
+  
+  (def new-crawled-users (union crawled-users #{user-id}))
 
   (if (> depth 0)
-    (let [new-depth (- depth 1)
-          new-crawled-users (union crawled-users #{user-id})]
+    (let [new-depth (- depth 1)]
+      ;; TODO update new-crawled-users
       (doall (map #(crawl-twitter-users 
                     :user-id % 
                     :depth new-depth 
@@ -137,5 +155,6 @@
                     :crawled-users new-crawled-users) 
                   new-people)))
     ;; else
-    (info "Stopping crawling for userid =" user-id " depth=0")))
+    (info "Stopping crawling for userid =" user-id " depth=0"))
+  new-crawled-users)
     
