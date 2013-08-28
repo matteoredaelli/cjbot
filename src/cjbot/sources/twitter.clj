@@ -16,6 +16,10 @@
                              (config :sources :twitter :creds :user-access-token) 
                              (config :sources :twitter :creds :user-access-token-secret)))
 
+(defn sleep [n]
+  (warn "Sleeping for" n "milliseconds")
+  (Thread/sleep n))
+
 (defn get-hashtags-from-timeline [timeline]
   (distinct (map clojure.string/lower-case (map :text (flatten (map :hashtags (map :entities (timeline :body))))))))
 
@@ -80,7 +84,7 @@
 )
 
 (defn crawl-twitter-users [ & {:keys [user-id depth crawler-params crawled-users]}]
-  (warn "Starting crawling user-id" user-id "with depth =" depth)
+  (warn "Starting crawling user-id" user-id "with depth =" depth ", crawled-users =" (count crawled-users))
   (warn "Retreiving friends for user-id =" user-id)
   (def friends 
     (((friends-ids :oauth-creds creds 
@@ -90,6 +94,7 @@
       :body)
      :ids))
   (warn "Found" (count friends) "friends for user-id " user-id)
+  (sleep (crawler-params :sleep))
 
 
   (warn "retreiving followers for user-id =" user-id) 
@@ -100,25 +105,29 @@
                               :count 5000})
       :body)
      :ids))
-  (warn "Found" (count followers) "folowers for user-id " user-id)
+  (warn "Found" (count followers) "followers for user-id " user-id)
+  (sleep (crawler-params :sleep))
 
   (def new-people (difference 
                    (union #{user-id} (set friends) (set followers))
                    crawled-users))
 
+  (warn "New users found =" (count new-people) )
   (doall (map #(println "user" %) new-people))
   (doall (map #(println "friend" user-id %) friends))
   (doall (map #(println "follower" user-id %) followers))
 
+  (sleep (crawler-params :sleep))
+
   (if (> depth 0)
     (let [new-depth (- depth 1)
           new-crawled-users (union crawled-users #{user-id})]
-      (map #(crawl-twitter-users 
-             :user-id % 
-             :depth new-depth 
-             :crawler-params crawler-params 
-             :crawled-users new-crawled-users) 
-           new-people))
+      (doall (map #(crawl-twitter-users 
+                    :user-id % 
+                    :depth new-depth 
+                    :crawler-params crawler-params 
+                    :crawled-users new-crawled-users) 
+                  new-people)))
     ;; else
     (info "Stopping crawling for userid =" user-id " depth=0")))
     
