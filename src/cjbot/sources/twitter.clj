@@ -45,6 +45,28 @@
 ;;
 ;;
 
+(defn get-user-followers [twitter-params]
+  (warn "Retreiving followers for user-id =" (twitter-params :user-id) "screen-name = " (twitter-params :screen-name))
+  (def followers (((followers-ids :oauth-creds creds 
+                                  :proxy (config :proxy)
+                                  :params (merge twitter-params
+                                                 {:count 5000}))
+      :body)
+     :ids))
+  (warn "Found" (count followers) "followers for user-id =" (twitter-params :user-id) "screen-name = " (twitter-params :screen-name))
+  followers)
+
+(defn get-user-friends [twitter-params]
+  (warn "Retreiving friends for user-id =" (twitter-params :user-id) "screen-name = " (twitter-params :screen-name))
+  (def friends (((friends-ids :oauth-creds creds 
+                              :proxy (config :proxy)
+                              :params (merge twitter-params
+                                             {:count 5000}))
+      :body)
+     :ids))
+  (warn "Found" (count friends) "friends for user-id ="  (twitter-params :user-id) "screen-name = " (twitter-params :screen-name))
+  friends)
+
 (defn extract-twitter-user [ & {:keys [twitter-params]}]
   ;; extracting info about the user params must be
   ;; {:screen-name user} or {:user-id user}
@@ -67,18 +89,8 @@
         ;;                          :params params)
         ;;people-favorites (map :screen_name (map :user (favorites :body)))
 
-   
-        friends (((friends-ids :oauth-creds creds 
-                               :proxy (config :proxy)
-                               :params (merge twitter-params {:count 5000}))
-                  :body) 
-                 :ids)
- 
-        followers (((followers-ids :oauth-creds creds 
-                                   :proxy (config :proxy)
-                                   :params (merge twitter-params {:count 5000}))
-                    :body) 
-                   :ids)
+        friends nil
+        followers nil 
         ]
     (debug "friends-count =" (count friends) ((user-show :body) :friends_count))
     (debug "followers-count =" (count followers) ((user-show :body) :followers_count))
@@ -94,29 +106,14 @@
 
 (defn crawl-twitter-users [ & {:keys [user-id depth crawler-params crawled-users]}]
   (warn "Starting crawling user-id" user-id "with depth =" depth ", crawled-users =" (count crawled-users))
-  (warn "Retreiving friends for user-id =" user-id)
-  (def friends 
-    (((friends-ids :oauth-creds creds 
-                     :proxy (config :proxy)
-                     :params {:user-id user-id
-                              :count 5000})
-      :body)
-     :ids))
-  (warn "Found" (count friends) "friends for user-id " user-id)
+
+  (def friends (get-user-friends {:user-id user-id}))
   (when (re-find #"stdout" (crawler-params :output))
      (map #(println "friend" user-id %) friends))
   (sleep (crawler-params :sleep))
 
 
-  (warn "retreiving followers for user-id =" user-id) 
-  (def followers 
-    (((followers-ids :oauth-creds creds 
-                     :proxy (config :proxy)
-                     :params {:user-id user-id
-                              :count 5000})
-      :body)
-     :ids))
-  (warn "Found" (count followers) "followers for user-id " user-id)
+  (def followers (get-user-followers {:user-id user-id}))
   (when (re-find #"stdout" (crawler-params :output))
      (doall (map #(println "follower" user-id %) followers)))
   (sleep (crawler-params :sleep))
