@@ -6,6 +6,7 @@
    [twitter.callbacks]
    [twitter.callbacks.handlers]
    [twitter.api.restful]
+   [twitter.api.search]
    [carica.core])
   (:require 
    [taoensso.timbre :as timbre
@@ -90,6 +91,40 @@
         ;;favorites (favorites-list :oauth-creds creds 
         ;;                          :params params)
         ;;people-favorites (map :screen_name (map :user (favorites :body)))
+
+
+;
+; SEARCH
+;
+(defn search-one [q since_id]
+  (warn "Retreiving tweets for q =" q "and since_id =" since_id)
+  (def results ((search :oauth-creds creds
+                        :proxy (config :proxy)
+                        :params {:q q
+                                 :since_id since_id
+                                 :count 1500}) :body))
+  (warn "Found" (count (results :statuses)) " tweets for q =" q)
+  results)
+
+
+(defn search-all [q since_id]
+  (def results {})
+  (def statuses [])
+  (def tot 100)
+  (def new_since_id since_id)
+  (while (== tot 100)
+     (do 
+       (def results (search-one q new_since_id))
+       (def new_since_id ((results :search_metadata) :max_id))
+       (warn "since_id =" new_since_id)
+       (def tot (count (results :statuses)))
+       (def statuses (concat statuses (results :statuses)))
+       (warn "tot results =" (count statuses))))
+  {:search_metadata (results :search_metadata) :statuses statuses})
+  
+;
+; CRAWLER
+;
 
 (defn crawl-twitter-users [ & {:keys [user-id depth crawler-params crawled-users]}]
   (warn "Starting crawling user-id" user-id "with depth =" depth ", crawled-users =" (count crawled-users))
