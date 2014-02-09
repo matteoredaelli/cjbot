@@ -78,7 +78,15 @@
   (warn "Found" (count timeline) "tweets in timeline for user-id =" (twitter-params :user-id) "screen-name = " (twitter-params :screen-name))
   timeline)
 
-(defn get-users-lookup [people]
+(defn get-users-lookup [twitter-params]
+  (warn "Retreiving timeline for user-id =" (twitter-params :user-id) "screen-name = " (twitter-params :screen-name))
+  (def result ((users-lookup :oauth-creds creds 
+                             :proxy (config :proxy)
+                             :params twitter-params)
+    :body))
+  result)
+
+(defn get-usersss-lookup [people]
   ;; split in list of 100 people
   ;; (users-lookup {user-id "1,1,1,1"})
   nil
