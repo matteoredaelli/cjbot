@@ -9,7 +9,7 @@
   [& args]
   (let [[opts args banner]
         (cli args
-             ["-c" "--cmd" "users-show|crawl-users"]
+             ["-c" "--cmd" "lookup-users|crawl-users"]
              ["-h" "--help" "Show help" :flag true :default false]
              ["-d" "--depth" "depth" :default "0"]
              ["-o" "--output" "output to stdout|redis" :default "stdout"]
@@ -18,11 +18,16 @@
              ["-u" "--user-id" "user-id like 16837493"]
              ["-N" "--screen-name" "username like matteoredaelli"]
              )]
-    (when (or (:help opts) (not (:cmd opts)) (not (:user-id opts)) )
+    (when (or (:help opts)
+              (not (:cmd opts)) 
+              (not (or (:user-id opts)
+                       (:screen-name opts))))
       (println banner)
       (System/exit 0))
     (case (:cmd opts)
-      "lookup-users" (get-users-lookup {:screen-name (read-string (:screen-name opts))})
+      "lookup-users" (if (:user-id opts)
+                       (get-users-lookup {:user-id (read-string (:user-id opts))})
+                       (get-users-lookup {:screen-name (read-string (:screen-name opts))}))
       "crawl-users"  
       (crawl-twitter-users :depth (read-string (:depth opts))
                            :user-id (read-string (:user-id opts))
