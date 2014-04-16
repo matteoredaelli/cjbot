@@ -201,3 +201,15 @@
     (info "Stopping crawling for userid =" user-id " depth=0"))
   new-crawled-users)
     
+;; es. 21931460
+(defn all-lists-members [list-id]
+  (def cursor (atom -1))
+  (def users (atom ()))
+  (while (not= @cursor 0)
+    (do (println @cursor)
+        (def l (lists-members :oauth-creds creds :params {:cursor @cursor :list-id list-id}))
+        ;;(reset! users (concat @users (map :screen_name  ((l :body) :users))))
+        (reset! users (concat @users ((l :body) :users)))
+        (reset! cursor ((l :body) :next_cursor))
+        ))
+  @users)
