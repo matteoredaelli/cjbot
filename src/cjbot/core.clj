@@ -2,7 +2,8 @@
   (:gen-class)
   (:use [cjbot.sources.twitter]
         [clojure.tools.cli :only (cli)]
-        ))
+        )
+  (:require [clojure.data.json :as json]))
 
 (defn -main
   "I don't do a whole lot ... yet."
@@ -26,8 +27,8 @@
     (case (:cmd opts)
       "lists-members" (if (:list-id opts)
                         (let [members (all-lists-members (read-string (:list-id opts)))]
-                          (when (re-find #"stdout" (opts :output))
-                            println members)))
+                          (when (re-find #"stdout" (:output opts))
+                            (print (json/write-str members)))))
 
       "lookup-users" (if (:user-id opts)
                        (get-users-lookup {:user-id (read-string (:user-id opts))})

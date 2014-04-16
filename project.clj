@@ -16,5 +16,6 @@
                  [sonian/carica "1.0.4"]
                  ;; for parsing commandline args
                  [org.clojure/tools.cli "0.3.1"]
+                 ;;[org.clojure/data.csv "0.1.2"]
                  ]
   :main cjbot.core)
