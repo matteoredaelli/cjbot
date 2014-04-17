@@ -44,30 +44,60 @@
     (distinct (map :expanded_url (concat url_objects_no_retweets url_objects_retweets)))))
 
 ;;
-;;
+;;  get-user-followers
 ;;
 
-(defn get-user-followers [twitter-params]
+(defn get-user-followers [ & {:keys [twitter-params crawler-params]}]
   (warn "Retreiving followers for user-id =" (twitter-params :user-id) "screen-name = " (twitter-params :screen-name))
-  (def followers (((followers-ids :oauth-creds creds 
-                                  :proxy (config :proxy)
-                                  :params (merge twitter-params
-                                                 {:count 5000}))
-      :body)
-     :ids))
-  (warn "Found" (count followers) "followers for user-id =" (twitter-params :user-id) "screen-name = " (twitter-params :screen-name))
-  followers)
-
-(defn get-user-friends [twitter-params]
-  (warn "Retreiving friends for user-id =" (twitter-params :user-id) "screen-name = " (twitter-params :screen-name))
-  (def friends (((friends-ids :oauth-creds creds 
+  (def cursor (atom -1))
+  (def users (atom ()))
+  (while (not= @cursor 0)
+    (do (warn @cursor)
+        (def body ((followers-ids :oauth-creds creds 
                               :proxy (config :proxy)
-                              :params (merge twitter-params
-                                             {:count 5000}))
-      :body)
-     :ids))
-  (warn "Found" (count friends) "friends for user-id ="  (twitter-params :user-id) "screen-name = " (twitter-params :screen-name))
-  friends)
+                              :params twitter-params) :body))
+
+        (reset! users (concat @users (body :ids)))
+        (reset! cursor (body :next_cursor))
+
+        (when (re-find #"stdout" (crawler-params :output))
+           (doall (map #(println "follower" (twitter-params :user-id) %) (body :ids)  )))
+
+        (when (re-find #"redis" (crawler-params :output))
+           (save-key-value-hash source-name "user" (twitter-params :user-id) "followers" (body :ids) ))
+
+        (sleep (crawler-params :sleep))))
+
+  (warn "Found" (count @users) "followers for user-id ="  (twitter-params :user-id) "screen-name = " (twitter-params :screen-name))
+  @users)
+
+;;
+;;  get-user-friends
+;;
+
+(defn get-user-friends [ & {:keys [twitter-params crawler-params]}]
+  (warn "Retreiving friends for user-id =" (twitter-params :user-id) "screen-name = " (twitter-params :screen-name))
+  (def cursor (atom -1))
+  (def users (atom ()))
+  (while (not= @cursor 0)
+    (do (warn @cursor)
+        (def body ((friends-ids :oauth-creds creds 
+                              :proxy (config :proxy)
+                              :params twitter-params) :body))
+
+        (reset! users (concat @users (body :ids)))
+        (reset! cursor (body :next_cursor))
+
+        (when (re-find #"stdout" (crawler-params :output))
+           (doall (map #(println "friends" (twitter-params :user-id) %) (body :ids)  )))
+
+        (when (re-find #"redis" (crawler-params :output))
+           (save-key-value-hash source-name "user" (twitter-params :user-id) "friends" (body :ids) ))
+
+        (sleep (crawler-params :sleep))))
+
+  (warn "Found" (count @users) "friend for user-id ="  (twitter-params :user-id) "screen-name = " (twitter-params :screen-name))
+  @users)
 
 (defn get-user-timeline [twitter-params]
   (warn "Retreiving timeline for user-id =" (twitter-params :user-id) "screen-name = " (twitter-params :screen-name))
@@ -140,26 +170,16 @@
   ;;
   ;; friends
   ;; 
-  (def friends (get-user-friends {:user-id user-id}))
-
-  (when (re-find #"stdout" (crawler-params :output))
-    (doall (map #(println "friend" user-id %) friends)))
-
-  (when (re-find #"redis" (crawler-params :output))
-    (save-key-value-hash source-name "user" user-id "friends" friends))
+  (def friends (get-user-friends :twitter-params {:user-id user-id}
+                                 :crawler-params crawler-params))
 
   (sleep (crawler-params :sleep))
 
   ;;
   ;; followers
   ;; 
-  (def followers (get-user-followers {:user-id user-id}))
-
-  (when (re-find #"stdout" (crawler-params :output))
-     (doall (map #(println "follower" user-id %) followers)))
-
-  (when (re-find #"redis" (crawler-params :output))
-    (save-key-value-hash source-name "user" user-id "followers" followers))
+  (def followers (get-user-followers :twitter-params {:user-id user-id}
+                                 :crawler-params crawler-params))
 
   (sleep (crawler-params :sleep))
 
@@ -206,8 +226,11 @@
   (def cursor (atom -1))
   (def users (atom ()))
   (while (not= @cursor 0)
-    (do (println @cursor)
-        (def l (lists-members :oauth-creds creds :params {:cursor @cursor :list-id list-id}))
+    (do ;;(println @cursor)
+        (def l (lists-members :oauth-creds creds
+                              :proxy (config :proxy)
+                              :params {:cursor @cursor
+                                       :list-id list-id}))
         ;;(reset! users (concat @users (map :screen_name  ((l :body) :users))))
         (reset! users (concat @users ((l :body) :users)))
         (reset! cursor ((l :body) :next_cursor))

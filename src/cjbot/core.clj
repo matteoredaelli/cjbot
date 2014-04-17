@@ -28,7 +28,8 @@
       "lists-members" (if (:list-id opts)
                         (let [members (all-lists-members (read-string (:list-id opts)))]
                           (when (re-find #"stdout" (:output opts))
-                            (print (json/write-str members)))))
+                            (doseq [m members]
+                              (println (json/write-str m))))))
 
       "lookup-users" (if (:user-id opts)
                        (get-users-lookup {:user-id (read-string (:user-id opts))})
