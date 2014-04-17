@@ -31,9 +31,12 @@
                             (doseq [m members]
                               (println (json/write-str m))))))
 
-      "lookup-users" (if (:user-id opts)
-                       (get-users-lookup {:user-id (read-string (:user-id opts))})
-                       (get-users-lookup {:screen-name (read-string (:screen-name opts))}))
+      "lookup-users" (let [users (if (:user-id opts)
+                                   (get-users-lookup {:user-id (read-string (:user-id opts))})
+                                   (get-users-lookup {:screen-name (read-string (:screen-name opts))}))]
+                       (when (re-find #"stdout" (:output opts))
+                         (doseq [u users]
+                           (println (json/write-str u)))))
       "crawl-users"  
       (crawl-twitter-users :depth (read-string (:depth opts))
                            :user-id (read-string (:user-id opts))
