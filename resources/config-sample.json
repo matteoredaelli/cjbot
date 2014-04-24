@@ -1,8 +1,15 @@
 {
     "proxy": {"host": "myproxy.mycompany.com",
-	      "port": 80},
+	      "port": 80
+	     },
     "redis": {"host": "localhost",
-	      "port": 6380},
+	      "port": 6379,
+	      "prefix": "cjbot"
+	     },
+    "mongodb": {"host": "localhost",
+		"port": 7878,
+		"prefix": "cjbot"
+	       },
     "sources": {
 	"twitter": {
 	    "creds": {"app-consumer-key": "XXXXXXXXX",
