@@ -34,6 +34,9 @@ Queues:
 
 {\"id\":\"zzzz\", \"source\":\"twitter\", \"body\": {\"key\":\"lists-members\", \"value\": {\"list-id\":21931460}}}
 
+PUBLISH cjbot.crawler.req '{"id":"zzzz", "source":"twitter", "body": {"key":"lists-members", "value": {"list-id":"21931460"}}}'
+
+
 * cjbot.crawler.resp
 
 * cjbot.db.update.req

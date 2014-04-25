@@ -8,6 +8,7 @@
    [twitter.api.search]
    [carica.core]
    ;; my files
+   [cjbot.mq_utils]
    [cjbot.redis]
    [cjbot.sources.twitter_utils]
    )
@@ -32,12 +33,21 @@
         (let [l (lists-members :oauth-creds creds
                               :proxy (config :proxy)
                               :params {:cursor @cursor
-                                       :list-id list-id})]
-          (reset! users (concat @users ((l :body) :users)))
+                                       :list-id list-id})
+              new-users ((l :body) :users)]
+          (reset! users (concat @users new-users))
           (reset! cursor ((l :body) :next_cursor))
+          (warn "Sending" (count new-users) "new users to queue=" queue)
           ;; extract users to be saved to db
-          ;;(map #{cjbot-mq-publish queue {:source "twitter" :object "user }(l :body)
-          ;;(wcar* (car/publish "cjbot.db.resp" resp-json))
+          (doall (map #(cjbot-mq-publish queue 
+                                         {:source "twitter" 
+                                          :object "user" 
+                                          :key-name "id" 
+                                          :key-val (% :id) 
+                                          :attribute-name "lookup" 
+                                          :attribute-val %})
+                      new-users))
+          ;;(wcar* (car/publish "cjbot.db.update.resp" resp-json))
           
           )))
   @users))

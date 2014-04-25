@@ -1,6 +1,7 @@
 (ns cjbot.redis
   (:gen-class)
   (:use [carica.core])
+  (:use [cjbot.mq_utils])
   (:require 
    [clojure.data.json :as json]
    [taoensso.carmine :as car :refer (wcar)]
@@ -12,12 +13,6 @@
 
 (defmacro wcar* [& body] `(car/wcar redis-conn ~@body))
 
-(defn encode-message [msg]
-  (json/write-str msg))
-
-(defn decode-message [msg]
-  (json/read-json msg))
-
 (defn save-key-hash-value [key hash value]
   (warn "Saving REDIS key =" key)
   (wcar* (car/hsetnx key hash (encode-message value))))
@@ -27,11 +22,9 @@
     (save-key-hash-value key hash value)
     (warn "Saving to REDIS key =" key "hash =" hash)))
 
-(defn cjbot-queue-name-with-prefix [queue]
-  (format "%s.%s" (config :redis :prefix) queue))
-
-(defn cjbot-mq-publish [queue msg]
+(defn cjbot-mq-publish [subqueue msg]
   (let [msg-json (encode-message msg)
-        queue (cjbot-queue-name-with-prefix queue)]
+        queue (cjbot-queue-name-with-prefix subqueue)]
+    (warn "MQ :: publishing to queue=" queue msg)
     (wcar* (car/publish queue msg-json))))
 

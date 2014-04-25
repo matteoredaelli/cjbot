@@ -1,7 +1,7 @@
 (ns cjbot.core
   (:gen-class)
   (:use 
-        [cjbot.crawler]
+        [cjbot.mq]
         [clojure.tools.cli :only (cli)]
         )
   (:require [clojure.data.json :as json]))
@@ -21,5 +21,5 @@
     (case (:cmd opts)
       "todo" (println (:cmd opts))
       ;; else      
-      (println banner)
+      (println "running...")
       )))
