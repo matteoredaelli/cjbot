@@ -7,8 +7,8 @@
 	      "prefix": "cjbot"
 	     },
     "mongodb": {"host": "localhost",
-		"port": 7878,
-		"prefix": "cjbot"
+		"port": 27017,
+		"db": "cjbot"
 	       },
     "sources": {
 	"twitter": {

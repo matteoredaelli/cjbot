@@ -4,7 +4,11 @@
         [cjbot.mq]
         [clojure.tools.cli :only (cli)]
         )
-  (:require [clojure.data.json :as json]))
+  (:require [clojure.data.json :as json]
+            [taoensso.timbre :as timbre
+             :refer (trace debug info warn error fatal spy with-log-level)])
+  )
+
 
 (defn -main
   "I don't do a whole lot ... yet."
@@ -18,6 +22,8 @@
               (not (:cmd opts)))
       (println banner)
       (System/exit 0))
+   
+    (timbre/set-level! :warn)
     (case (:cmd opts)
       "todo" (println (:cmd opts))
       ;; else      

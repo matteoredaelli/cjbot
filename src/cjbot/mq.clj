@@ -21,16 +21,16 @@
     (car/with-new-pubsub-listener (:spec redis-conn)
       ;; crawler
       {queue-crawler-req (fn f1 [msg] (cjbot-crawler-reqs-listener msg))
-       ;;"cjbot.crawler.req"   (fn f2 [msg] (println "Pattern match: " (= (first msg) "message")))
-       queues-crawler (fn f3 [msg] (println "Pattern match: " msg))
+       queues-crawler (fn f3 [msg] (debug "Pattern match: " msg))
       ;; db
-       queue-db-update-req (fn f2 [msg] (println "Pattern match: " msg))
-       queues-db (fn f3 [msg] (println "Pattern match: " msg))}
+       queue-db-update-req (fn f2 [msg] (cjbot-db-update-reqs-listener msg))
+       ;;queue-db-update-req (fn f2 [msg] (println "Pattern match: " msg))
+       queues-db (fn f3 [msg] (debug "Pattern match: " msg))}
 
       ;; crawler
       (car/subscribe  queue-crawler-req)
-      (car/psubscribe queues-crawler)
+      ;;(car/psubscribe queues-crawler)
       ;; DB
       (car/subscribe  queue-db-update-req)
-      (car/psubscribe queues-db)
+      ;;(car/psubscribe queues-db)
       )))

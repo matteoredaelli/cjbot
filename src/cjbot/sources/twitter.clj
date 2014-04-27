@@ -27,7 +27,7 @@
   (let [list-id (req-value :list-id)
         cursor (atom -1)
         users (atom ())
-        queue (cjbot-queue-name-with-prefix "db.update.req")]
+        queue "db.update.req"]
     (while (not= @cursor 0)
       (do ;;(println @cursor)
         (let [l (lists-members :oauth-creds creds
@@ -39,15 +39,17 @@
           (reset! cursor ((l :body) :next_cursor))
           (warn "Sending" (count new-users) "new users to queue=" queue)
           ;; extract users to be saved to db
-          (doall (map #(cjbot-mq-publish queue 
+          (doall (map #(cjbot-mq-publish queue
                                          {:source "twitter" 
                                           :object "user" 
-                                          :key-name "id" 
-                                          :key-val (% :id) 
-                                          :attribute-name "lookup" 
-                                          :attribute-val %})
-                      new-users))
-          ;;(wcar* (car/publish "cjbot.db.update.resp" resp-json))
-          
-          )))
-  @users))
+                                          :id (% :id) 
+                                          :attribute {:lookup %}})
+                      new-users))      
+          ))) ;; end while
+    (warn "Sending" (count @users) "list members to queue=" queue)
+    (cjbot-mq-publish queue
+                      {:source "twitter" 
+                       :object "list" 
+                       :id list-id 
+                       :attribute {:members (map :id @users)}})
+    @users))

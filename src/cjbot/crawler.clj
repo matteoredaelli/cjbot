@@ -7,7 +7,6 @@
    [cjbot.sources.twitter])
   (:require 
    [clojure.data.json :as json]
-   [taoensso.carmine :as car :refer (wcar)]
    [taoensso.timbre :as timbre
     :refer (trace debug info warn error fatal spy with-log-level)]))
 
@@ -34,6 +33,5 @@
                     req-map (decode-message req)
                     resp (cjbot-crawler-reqs-eval req-map)
                     resp-json (encode-message {:req req :resp resp})]
-                ;;(wcar* (car/publish "cjbot.crawler.resp" resp-json))
-                (warn "Result="))
-    (println "no action")))
+                (cjbot-mq-publish "crawler.resp" {:req req :resp "ok"}))
+    (warn "no action")))

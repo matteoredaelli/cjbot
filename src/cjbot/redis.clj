@@ -25,6 +25,6 @@
 (defn cjbot-mq-publish [subqueue msg]
   (let [msg-json (encode-message msg)
         queue (cjbot-queue-name-with-prefix subqueue)]
-    (warn "MQ :: publishing to queue=" queue msg)
+    (debug "MQ :: publishing to queue=" queue msg)
     (wcar* (car/publish queue msg-json))))
 
