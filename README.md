@@ -36,6 +36,9 @@ Queues:
 
 PUBLISH cjbot.crawler.req '{"id":"zzzz", "source":"twitter", "body": {"key":"lists-members", "value": {"list-id":"21931460"}}}'
 
+PUBLISH cjbot.crawler.req '{"id":"zzzz", "source":"twitter", "body": {"key":"users-suggestions", "value": {"lang":"en"}}}'
+
+PUBLISH cjbot.crawler.req '{"id":"zzzz", "source":"twitter", "body": {"key":"followers-ids", "value": {"user-id":"461306712"}}}'
 
 * cjbot.crawler.resp
 
