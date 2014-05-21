@@ -180,6 +180,27 @@
     @users))
 
 ;; -----------------------------------------
+;; twitter-statuses-user-timeline
+;; -----------------------------------------
+
+(defn twitter-statuses-user-timeline [req-value]
+  (let [user-id (req-value :user-id)
+        queue "db.update.req"
+        req (statuses-user-timeline :oauth-creds creds
+                                    :proxy (config :proxy)
+                                    :params {:user-id user-id})
+        tweets (req :body)]
+    (debug tweets)
+    (warn "Sending" (count tweets) "tweets (timeline) to queue" queue)
+    ;; extract users to be saved to db
+    (cjbot-mq-publish queue
+                      {:source "twitter" 
+                       :object "user" 
+                       :id user-id
+                       :attribute {:timeline tweets}})
+    tweets))
+
+;; -----------------------------------------
 ;; twitter-users-suggestions-slug
 ;; -----------------------------------------
 
@@ -215,7 +236,10 @@
         queue "db.update.req"
         req (users-lookup :oauth-creds creds
                                :proxy (config :proxy)
-                               :params {:user-id user-id})
+                               :params {:user-id user-id
+                                        :count 2
+                                        :cursor -1
+                                        })
         users (req :body)]
     (debug users)
     (warn "Sending" (count users) "users to queue" queue)

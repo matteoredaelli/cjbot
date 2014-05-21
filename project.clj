@@ -3,7 +3,7 @@
   :url "https://github.com/matteoredaelli/cjbot"
   :license {:name "GNU GENERAL PUBLIC LICENSE"
             :url "www.gnu.org/licenses/gpl-3.0.txt"}
-  :dependencies [[org.clojure/clojure "1.5.1"]
+  :dependencies [[org.clojure/clojure "1.6.0"]
                  ;; SOURCES
                  [twitter-api "0.7.5"]
 
